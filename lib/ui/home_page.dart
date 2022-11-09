@@ -19,9 +19,11 @@ class _HomePageState extends State<HomePage> {
     http.Response response;
 
     if (_search == null) {
-      response = await http.get(Uri.parse("https://api.giphy.com/v1/gifs/trending?api_key=LxYozCZ8jcFq05G4kRR7YstH8qsGk6u4&limit=20&rating=g"));
+      response = await http.get(Uri.parse(
+          "https://api.giphy.com/v1/gifs/trending?api_key=LxYozCZ8jcFq05G4kRR7YstH8qsGk6u4&limit=19&rating=g"));
     } else {
-      response = await http.get(Uri.parse("https://api.giphy.com/v1/gifs/search?api_key=LxYozCZ8jcFq05G4kRR7YstH8qsGk6u4&q=$_search&limit=20&offset=$_offset&rating=g&lang=en"));
+      response = await http.get(Uri.parse(
+          "https://api.giphy.com/v1/gifs/search?api_key=LxYozCZ8jcFq05G4kRR7YstH8qsGk6u4&q=$_search&limit=19&offset=$_offset&rating=g&lang=en"));
     }
 
     return json.decode(response.body);
@@ -48,16 +50,22 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.black,
       body: Column(
         children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.all(10),
+          Padding(
+            padding: const EdgeInsets.all(10),
             child: TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Pesquise aqui!",
                 labelStyle: TextStyle(color: Colors.white),
                 border: OutlineInputBorder(),
               ),
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Colors.white, fontSize: 18),
               textAlign: TextAlign.center,
+              onSubmitted: (text) {
+                setState(() {
+                  _search = text;
+                  _offset = 0;
+                });
+              },
             ),
           ),
           Expanded(
@@ -91,6 +99,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  int _getCount(List data) {
+    if (_search == null) {
+      return data.length;
+    } else {
+      return data.length + 1;
+    }
+  }
+
   Widget _createGifTable(BuildContext context, AsyncSnapshot snapshot) {
     return GridView.builder(
         padding: const EdgeInsets.all(10),
@@ -99,15 +115,44 @@ class _HomePageState extends State<HomePage> {
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
-        itemCount: snapshot.data["data"].length,
+        itemCount: _getCount(snapshot.data["data"]),
         itemBuilder: (context, index) {
-          return GestureDetector(
-            child: Image.network(
-              snapshot.data["data"][index]["images"]["fixed_height"]["url"],
-              height: 300,
-              fit: BoxFit.cover,
-            ),
-          );
+          if (_search == null || index < snapshot.data["data"].length) {
+            return GestureDetector(
+              child: Image.network(
+                snapshot.data["data"][index]["images"]["fixed_height"]["url"],
+                height: 300,
+                fit: BoxFit.cover,
+              ),
+            );
+          } else {
+            return Container(
+              child: GestureDetector(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const <Widget>[
+                    Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 70,
+                    ),
+                    Text(
+                      "Carregar mais...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  setState(() {
+                    _offset += 19;
+                  });
+                },
+              ),
+            );
+          }
         });
   }
 }
